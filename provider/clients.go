@@ -1,7 +1,6 @@
 package provider
 
 import (
-	"context"
 	"fmt"
 	"time"
 
@@ -89,7 +88,7 @@ func GetOAPIFoundry() (foundry.Foundry, error) {
 	}
 
 	rq := rc.Verb("GET").Timeout(10*time.Second).AbsPath("openapi", "v2")
-	rs, err := rq.DoRaw(context.TODO())
+	rs, err := rq.DoRaw()
 	if err != nil {
 		return nil, fmt.Errorf("failed get OpenAPI spec: %s", err)
 	}

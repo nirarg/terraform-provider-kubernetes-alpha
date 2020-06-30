@@ -119,8 +119,7 @@ func PlanUpdateResourceHCLServerSide(ctx context.Context, p *cty.Value) (cty.Val
 		return cty.NilVal, err
 	}
 
-	ro, err := r.Patch(ctx,
-		rname,
+	ro, err := r.Patch(rname,
 		types.ApplyPatchType,
 		js,
 		v1.PatchOptions{

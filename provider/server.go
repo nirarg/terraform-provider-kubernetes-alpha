@@ -505,9 +505,9 @@ func (s *RawProviderServer) ReadResource(ctx context.Context, req *tfplugin5.Rea
 
 	var fo *unstructured.Unstructured
 	if ns {
-		fo, err = rcl.Namespace(rnamespace).Get(ctx, rname, v1.GetOptions{})
+		fo, err = rcl.Namespace(rnamespace).Get(rname, v1.GetOptions{})
 	} else {
-		fo, err = rcl.Get(ctx, rname, v1.GetOptions{})
+		fo, err = rcl.Get(rname, v1.GetOptions{})
 	}
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -645,7 +645,7 @@ func (s *RawProviderServer) ApplyResourceChange(ctx context.Context, req *tfplug
 				return resp, err
 			}
 			// Call the Kubernetes API to create the new resource
-			result, err := rs.Patch(ctx, rname, types.ApplyPatchType, jd, v1.PatchOptions{FieldManager: "Terraform"})
+			result, err := rs.Patch(rname, types.ApplyPatchType, jd, v1.PatchOptions{FieldManager: "Terraform"})
 			if err != nil {
 				Dlog.Printf("[ApplyResourceChange][Create] Error: %s\n%s\n", spew.Sdump(err), spew.Sdump(result))
 				n := types.NamespacedName{Namespace: rnamespace, Name: rname}.String()
@@ -700,7 +700,7 @@ func (s *RawProviderServer) ApplyResourceChange(ctx context.Context, req *tfplug
 			} else {
 				rs = c.Resource(gvr)
 			}
-			err = rs.Delete(ctx, rname, v1.DeleteOptions{})
+			err = rs.Delete(rname, &v1.DeleteOptions{})
 			if err != nil {
 				rn := types.NamespacedName{Namespace: rnamespace, Name: rname}.String()
 				return resp, fmt.Errorf("DELETE resource %s failed: %s", rn, err)
@@ -740,7 +740,7 @@ func (s *RawProviderServer) ApplyResourceChange(ctx context.Context, req *tfplug
 				return resp, err
 			}
 			// Call the Kubernetes API to apply the new resource state
-			result, err := rs.Patch(ctx, rname, types.ApplyPatchType, jd, v1.PatchOptions{FieldManager: "Terraform"})
+			result, err := rs.Patch(rname, types.ApplyPatchType, jd, v1.PatchOptions{FieldManager: "Terraform"})
 			if err != nil {
 				rn := types.NamespacedName{Namespace: rnamespace, Name: rname}.String()
 				resp.Diagnostics = append(resp.Diagnostics,
