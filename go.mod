@@ -28,3 +28,5 @@ require (
 replace k8s.io/client-go => k8s.io/client-go v0.17.1
 
 replace k8s.io/apimachinery => k8s.io/apimachinery v0.17.1
+
+replace github.com/hashicorp/terraform-plugin-sdk => github.com/nirarg/hashicorp-terraform-plugin-sdk v1.6.1-0.20200630173234-cb1c894b681a

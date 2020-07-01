@@ -15,7 +15,7 @@ import (
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/go-cty/cty/json"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/logging"
-	"github.com/hashicorp/terraform-provider-kubernetes-alpha/tfplugin5"
+	"github.com/hashicorp/terraform-plugin-sdk/tfplugin5"
 	"github.com/mitchellh/go-homedir"
 
 	"github.com/hashicorp/go-cty/cty/msgpack"

@@ -2,7 +2,7 @@ package provider
 
 import (
 	"github.com/hashicorp/go-cty/cty"
-	proto "github.com/hashicorp/terraform-provider-kubernetes-alpha/tfplugin5"
+	proto "github.com/hashicorp/terraform-plugin-sdk/tfplugin5"
 )
 
 // WarnsAndErrsToProto converts the warnings and errors returned by the legacy
