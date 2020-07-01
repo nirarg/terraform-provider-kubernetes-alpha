@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/go-cty/cty"
-	"github.com/hashicorp/terraform-provider-kubernetes-alpha/tfplugin5"
+	"github.com/hashicorp/terraform-plugin-sdk/tfplugin5"
 )
 
 // GetObjectTypeFromSchema returns a cty.Type that can wholy represent the schema input
