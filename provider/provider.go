@@ -59,6 +59,12 @@ func GetProviderResourceSchema() (map[string]*tfplugin5.Schema, error) {
 						Optional:    true,
 						Description: "A map of attribute paths and desired patterns to be matched. After each apply the provider will wait for all attributes listed here to reach a value that matches the desired pattern.",
 					},
+					{
+						Name:        "open_api_path",
+						Type:        []byte{'"', 's', 't', 'r', 'i', 'n', 'g', '"'},
+						Optional:    true,
+						Description: "The Open API path used for the requested resource",
+					},
 				},
 			},
 		},
