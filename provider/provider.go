@@ -65,6 +65,12 @@ func GetProviderResourceSchema() (map[string]*tfplugin5.Schema, error) {
 						Optional:    true,
 						Description: "The Open API path used for the requested resource",
 					},
+					{
+						Name:        "use_create_api",
+						Type:        []byte{'"', 'b', 'o', 'o', 'l', '"'},
+						Optional:    true,
+						Description: "Use Create API, instead of Patch API, in case resource not support creating new using Patch",
+					},
 				},
 			},
 		},

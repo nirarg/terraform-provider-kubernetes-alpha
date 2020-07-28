@@ -634,18 +634,31 @@ func (s *RawProviderServer) ApplyResourceChange(ctx context.Context, req *tfplug
 			} else {
 				rs = c.Resource(gvr)
 			}
+			useCreateAPI := applyPlannedState.GetAttr("use_create_api")
+
 			jd, err := uo.MarshalJSON()
 			if err != nil {
 				return resp, err
 			}
 			// Call the Kubernetes API to create the new resource
-			result, err := rs.Patch(ctx, rname, types.ApplyPatchType, jd, v1.PatchOptions{FieldManager: "Terraform"})
-			if err != nil {
-				Dlog.Printf("[ApplyResourceChange][Create] Error: %s\n%s\n", spew.Sdump(err), spew.Sdump(result))
-				n := types.NamespacedName{Namespace: rnamespace, Name: rname}.String()
-				return resp, fmt.Errorf("CREATE resource %s failed: %s", n, err)
+			var (
+				result  *unstructured.Unstructured
+				usedAPI string
+			)
+
+			if useCreateAPI.IsNull() || useCreateAPI.False() {
+				result, err = rs.Patch(ctx, rname, types.ApplyPatchType, jd, v1.PatchOptions{FieldManager: "Terraform"})
+				usedAPI = "PATCH"
+			} else {
+				result, err = rs.Create(ctx, &uo, v1.CreateOptions{FieldManager: "Terraform"})
+				usedAPI = "CREATE"
 			}
-			Dlog.Printf("[ApplyResourceChange][Create] API response:\n%s\n", spew.Sdump(result))
+			if err != nil {
+				Dlog.Printf("[ApplyResourceChange][Create] (usedAPI=%s) Error: %s\n%s\n", usedAPI, spew.Sdump(err), spew.Sdump(result))
+				n := types.NamespacedName{Namespace: rnamespace, Name: rname}.String()
+				return resp, fmt.Errorf("CREATE (usedAPI=%s) resource %s failed: %s", usedAPI, n, err)
+			}
+			Dlog.Printf("[ApplyResourceChange][Create] (usedAPI=%s) API response:\n%s\n", usedAPI, spew.Sdump(result))
 
 			newResObject, err := UnstructuredToCty(FilterEphemeralFields(result.Object))
 			if err != nil {
