@@ -43,6 +43,12 @@ func GetProviderResourceSchema() (map[string]*tfplugin5.Schema, error) {
 						Optional: true,
 						Computed: true,
 					},
+					{
+						Name:        "open_api_path",
+						Type:        []byte{'"', 's', 't', 'r', 'i', 'n', 'g', '"'},
+						Optional:    true,
+						Description: "The Open API path used for the requested resource",
+					},
 				},
 			},
 		},
