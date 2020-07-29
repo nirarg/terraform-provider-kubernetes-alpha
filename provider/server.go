@@ -16,7 +16,7 @@ import (
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/go-cty/cty/json"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/logging"
-	"github.com/hashicorp/terraform-provider-kubernetes-alpha/tfplugin5"
+	"github.com/hashicorp/terraform-plugin-sdk/tfplugin5"
 	"github.com/mitchellh/go-homedir"
 
 	"github.com/hashicorp/go-cty/cty/msgpack"
@@ -510,9 +510,9 @@ func (s *RawProviderServer) ReadResource(ctx context.Context, req *tfplugin5.Rea
 
 	var fo *unstructured.Unstructured
 	if ns {
-		fo, err = rcl.Namespace(rnamespace).Get(ctx, rname, v1.GetOptions{})
+		fo, err = rcl.Namespace(rnamespace).Get(rname, v1.GetOptions{})
 	} else {
-		fo, err = rcl.Get(ctx, rname, v1.GetOptions{})
+		fo, err = rcl.Get(rname, v1.GetOptions{})
 	}
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
@@ -645,18 +645,31 @@ func (s *RawProviderServer) ApplyResourceChange(ctx context.Context, req *tfplug
 			} else {
 				rs = c.Resource(gvr)
 			}
+			useCreateAPI := applyPlannedState.GetAttr("use_create_api")
+
 			jd, err := uo.MarshalJSON()
 			if err != nil {
 				return resp, err
 			}
 			// Call the Kubernetes API to create the new resource
-			result, err := rs.Patch(ctx, rname, types.ApplyPatchType, jd, v1.PatchOptions{FieldManager: "Terraform"})
-			if err != nil {
-				Dlog.Printf("[ApplyResourceChange][Create] Error: %s\n%s\n", spew.Sdump(err), spew.Sdump(result))
-				n := types.NamespacedName{Namespace: rnamespace, Name: rname}.String()
-				return resp, fmt.Errorf("CREATE resource %s failed: %s", n, err)
+			var (
+				result  *unstructured.Unstructured
+				usedAPI string
+			)
+
+			if useCreateAPI.IsNull() || useCreateAPI.False() {
+				result, err = rs.Patch(rname, types.ApplyPatchType, jd, v1.PatchOptions{FieldManager: "Terraform"})
+				usedAPI = "PATCH"
+			} else {
+				result, err = rs.Create(&uo, v1.CreateOptions{FieldManager: "Terraform"})
+				usedAPI = "CREATE"
 			}
-			Dlog.Printf("[ApplyResourceChange][Create] API response:\n%s\n", spew.Sdump(result))
+			if err != nil {
+				Dlog.Printf("[ApplyResourceChange][Create] (usedAPI=%s) Error: %s\n%s\n", usedAPI, spew.Sdump(err), spew.Sdump(result))
+				n := types.NamespacedName{Namespace: rnamespace, Name: rname}.String()
+				return resp, fmt.Errorf("CREATE (usedAPI=%s) resource %s failed: %s", usedAPI, n, err)
+			}
+			Dlog.Printf("[ApplyResourceChange][Create] (usedAPI=%s) API response:\n%s\n", usedAPI, spew.Sdump(result))
 
 			newResObject, err := UnstructuredToCty(FilterEphemeralFields(result.Object))
 			if err != nil {
@@ -705,7 +718,7 @@ func (s *RawProviderServer) ApplyResourceChange(ctx context.Context, req *tfplug
 			} else {
 				rs = c.Resource(gvr)
 			}
-			err = rs.Delete(ctx, rname, v1.DeleteOptions{})
+			err = rs.Delete(rname, &v1.DeleteOptions{})
 			if err != nil {
 				rn := types.NamespacedName{Namespace: rnamespace, Name: rname}.String()
 				return resp, fmt.Errorf("DELETE resource %s failed: %s", rn, err)
@@ -745,7 +758,7 @@ func (s *RawProviderServer) ApplyResourceChange(ctx context.Context, req *tfplug
 				return resp, err
 			}
 			// Call the Kubernetes API to apply the new resource state
-			result, err := rs.Patch(ctx, rname, types.ApplyPatchType, jd, v1.PatchOptions{FieldManager: "Terraform"})
+			result, err := rs.Patch(rname, types.ApplyPatchType, jd, v1.PatchOptions{FieldManager: "Terraform"})
 			if err != nil {
 				rn := types.NamespacedName{Namespace: rnamespace, Name: rname}.String()
 				resp.Diagnostics = append(resp.Diagnostics,

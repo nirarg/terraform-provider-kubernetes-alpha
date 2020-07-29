@@ -30,14 +30,21 @@ func PlanUpdateResourceHCLLocal(ctx context.Context, plan *cty.Value) (cty.Value
 		return cty.NilVal, err
 	}
 
-	gvk, err := GVKFromCtyObject(&m)
-	if err != nil {
-		return cty.NilVal, fmt.Errorf("failed to determine resource GVR: %s", err)
-	}
+	var id string
+	openAPIPath := plan.GetAttr("open_api_path")
+	if openAPIPath.IsNull() {
+		gvk, err := GVKFromCtyObject(&m)
+		if err != nil {
+			return cty.NilVal, fmt.Errorf("failed to determine resource GVR: %s", err)
+		}
 
-	id, err := OpenAPIPathFromGVK(gvk)
-	if err != nil {
-		return cty.NilVal, fmt.Errorf("failed to determine resource type ID: %s", err)
+		openAPIPath, err := OpenAPIPathFromGVK(gvk)
+		if err != nil {
+			return cty.NilVal, fmt.Errorf("failed to determine resource type ID: %s", err)
+		}
+		id = openAPIPath
+	} else {
+		id = openAPIPath.AsString()
 	}
 
 	tsch, err := oapi.GetTypeByID(id)
@@ -119,8 +126,7 @@ func PlanUpdateResourceHCLServerSide(ctx context.Context, p *cty.Value) (cty.Val
 		return cty.NilVal, err
 	}
 
-	ro, err := r.Patch(ctx,
-		rname,
+	ro, err := r.Patch(rname,
 		types.ApplyPatchType,
 		js,
 		v1.PatchOptions{

@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/hashicorp/go-plugin"
-	"github.com/hashicorp/terraform-provider-kubernetes-alpha/tfplugin5"
+	"github.com/hashicorp/terraform-plugin-sdk/tfplugin5"
 	"google.golang.org/grpc"
 )
 
